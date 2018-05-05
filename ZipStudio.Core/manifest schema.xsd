@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="manifest">
+    <xs:complexType>
+      <xs:all>
+        <xs:element type="xs:string" name="guid" minOccurs="1"/>
+        <xs:element type="xs:string" name="name" minOccurs="0"/>
+        <xs:element type="xs:string" name="version" minOccurs="0"/>
+        <xs:element type="xs:string" name="author" minOccurs="0"/>
+        <xs:element type="xs:string" name="description" minOccurs="0"/>
+        <xs:element type="xs:string" name="website" minOccurs="0"/>
+      </xs:all>
+      <xs:attribute type="xs:integer" name="schema-ver" use="required"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
