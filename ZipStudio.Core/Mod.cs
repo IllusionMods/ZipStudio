@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ICSharpCode.SharpZipLib.Zip;
+using Ionic.Zip;
 
 namespace ZipStudio.Core
 {
@@ -17,11 +17,11 @@ namespace ZipStudio.Core
         {
             ZipFile = new ZipFile(filename);
 
-            var manifestentry = ZipFile.GetEntry("manifest.xml");
+            var manifestentry = ZipFile.Entries.FirstOrDefault(x => x.FileName == "manifest.xml");
 
             if (manifestentry != null)
             {
-                Manifest = new Manifest(ZipFile.GetInputStream(manifestentry));
+                Manifest = new Manifest(manifestentry.ExtractToMemory());
             }
             else
             {
@@ -31,7 +31,7 @@ namespace ZipStudio.Core
 
         public void Dispose()
         {
-            ZipFile.Close();
+            ZipFile.Dispose();
         }
     }
 }

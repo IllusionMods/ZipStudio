@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using ICSharpCode.SharpZipLib.Zip;
+using Ionic.Zip;
 
 namespace ZipStudio.GUI
 {
@@ -19,7 +19,7 @@ namespace ZipStudio.GUI
 
             SetColor();
 
-            Text = entry.Name.TrimEnd('/');
+            Text = entry.FileName.TrimEnd('/');
 
             if (Text.Contains('/'))
                 Text = Text.Remove(0, Text.IndexOf('/') + 1);
@@ -27,15 +27,15 @@ namespace ZipStudio.GUI
 
         protected void SetColor()
         {
-            if (Entry.IsFile)
+            if (!Entry.IsDirectory)
             {
-                if (Entry.Name.ToLower() == "manifest.xml")
+                if (Entry.FileName.ToLower() == "manifest.xml")
                 {
                     ForeColor = Color.SlateBlue;
                     return;
                 }
                 
-                if (Entry.Name.EndsWith(".csv"))
+                if (Entry.FileName.EndsWith(".csv"))
                 {
                     ForeColor = Color.OrangeRed;
                     return;
@@ -52,20 +52,20 @@ namespace ZipStudio.GUI
 
             foreach (ZipEntry entry in zipFile)
             {
-                if (!string.IsNullOrWhiteSpace(entry.Name))
+                if (!string.IsNullOrWhiteSpace(entry.FileName))
                     allCreated.Add(new ZipEntryNode(entry));
             }
             
-            foreach (ZipEntryNode node in allCreated.OrderByDescending(x => x.Entry.Name.Count(y => y == '/')))
+            foreach (ZipEntryNode node in allCreated.OrderByDescending(x => x.Entry.FileName.Count(y => y == '/')))
             {
                 bool foundOwner = false;
-                int slashCount = node.Entry.Name.TrimEnd('/').Count(y => y == '/');
+                int slashCount = node.Entry.FileName.TrimEnd('/').Count(y => y == '/');
 
                 foreach (ZipEntryNode potentialParentNode in allCreated)
                 {
                     if (potentialParentNode.Entry.IsDirectory &&
-                        node.Entry.Name.StartsWith(potentialParentNode.Entry.Name) &&
-                        potentialParentNode.Entry.Name.TrimEnd('/').Count(x => x == '/') == slashCount - 1)
+                        node.Entry.FileName.StartsWith(potentialParentNode.Entry.FileName) &&
+                        potentialParentNode.Entry.FileName.TrimEnd('/').Count(x => x == '/') == slashCount - 1)
                     {
                         foundOwner = true;
                         potentialParentNode.Nodes.Add(node);

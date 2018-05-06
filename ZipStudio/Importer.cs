@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ICSharpCode.SharpZipLib.Zip;
+using Ionic.Zip;
 using MessagePack;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using Mozilla.NUniversalCharDet.Prober;
@@ -49,10 +49,12 @@ namespace ZipStudio
             if (File.Exists(savePath))
                 File.Delete(savePath);
 
-            ZipFile file = ZipFile.Create(savePath);
+            ZipFile file = new ZipFile(savePath);
 
-            Manifest manifest = new Manifest();
-            manifest.Guid = "<not set>";
+            Manifest manifest = new Manifest
+            {
+                Guid = "<not set>"
+            };
 
             //check for root abdata folder
             string rootDir = "";
@@ -73,8 +75,8 @@ namespace ZipStudio
                     //no abdata folder exists
                     message = "Cannot find \"abdata\" folder!";
 
-                    file.CommitUpdate();
-                    file.Close();
+                    file.Save();
+                    file.Dispose();
                     File.Delete(savePath);
 
                     return false;
@@ -105,54 +107,60 @@ namespace ZipStudio
 
                 if (Directory.Exists(totalPath))
                 {
-                    foreach (string subFilePath in Directory.GetFiles(Path.Combine(rootDir, prefix), "*", SearchOption.AllDirectories))
+                    file.AddDirectoryByName(prefix + "/");
+
+                    foreach (string subFilePath in Directory.GetFiles(Path.Combine(rootDir, prefix), "*",
+                        SearchOption.AllDirectories))
                     {
-                        file.Add(subFilePath, subFilePath.Remove(0, rootDir.Length).Trim('\\', '/').Replace('\\', '/'));
+                        string newPath = subFilePath.Remove(0, rootDir.Length).Trim('\\', '/').Replace('\\', '/');
+                        newPath = newPath.Remove(newPath.LastIndexOf('/') + 1);
+
+                        file.AddFile(subFilePath, newPath);
                     }
 
                     foreach (string subDirPath in Directory.GetDirectories(Path.Combine(rootDir, prefix), "*", SearchOption.AllDirectories))
                     {
-                        file.AddDirectory(subDirPath.Remove(0, rootDir.Length).Trim('\\', '/').Replace('\\', '/') + "/");
+                        file.AddDirectoryByName(subDirPath.Remove(0, rootDir.Length).Trim('\\', '/').Replace('\\', '/') + "/");
                     }
                 }
             }
-            
-            file.BeginUpdate();
 
             //TryAddFolderFromRoot("abdata");
             TryAddFolderFromRoot("UserData");
 
 
             //need to add abdata with special care
+            file.AddDirectoryByName("abdata/");
             foreach (string subFilePath in Directory.GetFiles(Path.Combine(rootDir, "abdata"), "*", SearchOption.AllDirectories))
             {
                 string newPath = subFilePath.Remove(0, rootDir.Length).Trim('\\', '/').Replace('\\', '/');
+                newPath = newPath.Remove(newPath.LastIndexOf('/') + 1);
 
-                if (newPath.ToLower().StartsWith("abdata/list/characustom/"))
+                if (newPath.ToLower().StartsWith("abdata/list/characustom/") && subFilePath.EndsWith(".unity3d"))
                 {
                     //extract the lists
                     var contents = GetListContents(subFilePath);
 
                     foreach (var kv in contents)
                     {
-                        file.Add(__tempMakeFile(kv.Value), $"abdata/list/characustom/{kv.Key}");
+                        file.AddFileWithName(__tempMakeFile(kv.Value), $"abdata/list/characustom/{kv.Key}");
                     }
                 }
                 else
-                    file.Add(subFilePath, newPath);
+                    file.AddFile(subFilePath, newPath);
             }
 
             foreach (string subDirPath in Directory.GetDirectories(Path.Combine(rootDir, "abdata"), "*", SearchOption.AllDirectories))
             {
-                file.AddDirectory(subDirPath.Remove(0, rootDir.Length).Trim('\\', '/').Replace('\\', '/') + "/");
+                file.AddDirectoryByName(subDirPath.Remove(0, rootDir.Length).Trim('\\', '/').Replace('\\', '/') + "/");
             }
 
 
             //add manifest
-            file.Add(__tempMakeFile(manifest.Export()), "manifest.xml");
+            file.AddFileWithName(__tempMakeFile(manifest.Export()), "manifest.xml");
 
-            file.CommitUpdate();
-            file.Close();
+            file.Save();
+            file.Dispose();
 
             __deleteAllTempPaths();
 
@@ -172,7 +180,7 @@ namespace ZipStudio
             return manifestTempPath;
         }
 
-        static List<string> tempPaths = new List<string>();
+        static readonly List<string> tempPaths = new List<string>();
 
         static void __deleteAllTempPaths()
         {
