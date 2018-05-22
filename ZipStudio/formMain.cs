@@ -25,6 +25,10 @@ namespace ZipStudio
             {
                 currentMod = value;
                 UpdateModDetails();
+                SetManifestDatabinds(value.Manifest);
+
+                saveToolStripMenuItem.Enabled = true;
+                saveAsToolStripMenuItem.Enabled = true;
             }
         }
 
@@ -40,6 +44,7 @@ namespace ZipStudio
         public formMain()
         {
             InitializeComponent();
+            InitBindings();
         }
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
@@ -47,13 +52,21 @@ namespace ZipStudio
             OpenFileDialog dialog = new OpenFileDialog
             {
                 Filter = "Compressed folders (*.zip)|*.zip",
-
             };
 
             if (dialog.ShowDialog() != DialogResult.OK)
                 return;
 
             CurrentMod = new Mod(dialog.FileName);
+        }
+
+        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (currentMod == null)
+                return;
+
+            WriteToBindingManifest();
+            currentMod.Save();
         }
 
         private void folderToolStripMenuItem_Click(object sender, EventArgs e)
@@ -91,6 +104,35 @@ By Bepis";
             {
                 MessageBox.Show("Harsh a shit");
             }
+        }
+
+        #endregion
+
+        #region Manifest Databinding
+
+        private BindingSource manifestSource = new BindingSource();
+
+        private void InitBindings()
+        {
+            manifestSource = new BindingSource();
+            manifestSource.DataSource = typeof(Manifest);
+
+            txtGUID.DataBindings.Add(nameof(Label.Text), manifestSource, nameof(Manifest.Guid));
+            txtName.DataBindings.Add(nameof(Label.Text), manifestSource, nameof(Manifest.Name));
+            txtVersion.DataBindings.Add(nameof(Label.Text), manifestSource, nameof(Manifest.Version));
+            txtAuthor.DataBindings.Add(nameof(Label.Text), manifestSource, nameof(Manifest.Author));
+            txtWebsite.DataBindings.Add(nameof(Label.Text), manifestSource, nameof(Manifest.Website));
+            txtDescription.DataBindings.Add(nameof(Label.Text), manifestSource, nameof(Manifest.Description));
+        }
+
+        private void SetManifestDatabinds(Manifest manifest)
+        {
+            manifestSource.DataSource = manifest;
+        }
+
+        private void WriteToBindingManifest()
+        {
+            manifestSource.EndEdit();
         }
 
         #endregion

@@ -14,6 +14,7 @@ namespace ZipStudio.Core
     {
         protected XDocument xmlDocument;
         protected XmlSchemaSet xmlSchemaSet;
+        protected UTF8Encoding utfEncoding = new UTF8Encoding(true);
 
         #region Properties
 
@@ -103,6 +104,11 @@ namespace ZipStudio.Core
         public string Export()
         {
             return xmlDocument.ToString();
+        }
+        
+        public byte[] ExportAsBytes()
+        {
+            return utfEncoding.GetBytes(Export());
         }
 
         public static bool TryParseManifest(Stream stream, out Manifest manifest)
