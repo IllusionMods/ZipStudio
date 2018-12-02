@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Ionic.Zip;
+using System;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Ionic.Zip;
 
 namespace ZipStudio.Core
 {

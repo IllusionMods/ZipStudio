@@ -1,14 +1,12 @@
-﻿using System;
+﻿using AssetStudio;
+using Ionic.Zip;
+using MessagePack;
+using Microsoft.WindowsAPICodePack.Dialogs;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using Ionic.Zip;
-using MessagePack;
-using Microsoft.WindowsAPICodePack.Dialogs;
-using Mozilla.NUniversalCharDet.Prober;
-using Unity_Studio;
 using ZipStudio.Core;
 
 namespace ZipStudio
@@ -49,7 +47,8 @@ namespace ZipStudio
             if (File.Exists(savePath))
                 File.Delete(savePath);
 
-            ZipFile file = new ZipFile(savePath);
+            ZipFile file = new ZipFile(savePath, Encoding.UTF8);
+            //file.CompressionLevel = Ionic.Zlib.CompressionLevel.None;
 
             Manifest manifest = new Manifest
             {
@@ -83,22 +82,11 @@ namespace ZipStudio
                 }
             }
 
-            string textFilePath = Directory.EnumerateFiles(rootDir, "*.txt", SearchOption.TopDirectoryOnly).FirstOrDefault() ?? "";
-
-            if (textFilePath != "")
+            string GetNewPath(string FullPath)
             {
-                byte[] data = File.ReadAllBytes(textFilePath);
-
-                //try and detect shift-JIS encoding
-                SJISProber sjisProber = new SJISProber();
-                var result = sjisProber.handleData(data, 0, data.Length);
-
-                var confidence = sjisProber.getConfidence();
-
-                if (confidence > 0.95) //shift-jis text
-                    manifest.Description = Encoding.GetEncoding(932).GetString(data);
-                else //assume UTF-8 for ASCII compatiblity
-                    manifest.Description = Encoding.UTF8.GetString(data);
+                string newPath = FullPath.Remove(0, rootDir.Length).Trim('\\', '/').Replace('\\', '/');
+                newPath = newPath.Remove(newPath.LastIndexOf('/') + 1);
+                return newPath;
             }
 
             void TryAddFolderFromRoot(string prefix)
@@ -109,54 +97,113 @@ namespace ZipStudio
                 {
                     file.AddDirectoryByName(prefix + "/");
 
-                    foreach (string subFilePath in Directory.GetFiles(Path.Combine(rootDir, prefix), "*",
-                        SearchOption.AllDirectories))
-                    {
-                        string newPath = subFilePath.Remove(0, rootDir.Length).Trim('\\', '/').Replace('\\', '/');
-                        newPath = newPath.Remove(newPath.LastIndexOf('/') + 1);
-
-                        file.AddFile(subFilePath, newPath);
-                    }
+                    foreach (string subFilePath in Directory.GetFiles(Path.Combine(rootDir, prefix), "*", SearchOption.AllDirectories))
+                        file.AddFile(subFilePath, GetNewPath(subFilePath));
 
                     foreach (string subDirPath in Directory.GetDirectories(Path.Combine(rootDir, prefix), "*", SearchOption.AllDirectories))
-                    {
                         file.AddDirectoryByName(subDirPath.Remove(0, rootDir.Length).Trim('\\', '/').Replace('\\', '/') + "/");
-                    }
                 }
             }
-
-            //TryAddFolderFromRoot("abdata");
-            TryAddFolderFromRoot("UserData");
-
 
             //need to add abdata with special care
             file.AddDirectoryByName("abdata/");
+            TryAddFolderFromRoot("UserData");
+
+            //Export csv files
+            if (Directory.Exists(Path.Combine(rootDir, "abdata/list/characustom/")))
+            {
+                AssetsManager assetsManager = new AssetsManager();
+                assetsManager.LoadFolder(Path.Combine(rootDir, "abdata/list/characustom/"));
+                foreach (var assetFile in assetsManager.assetsFileList)
+                {
+                    bool hasOtherAssets = false;
+
+                    foreach (var asset in assetFile.Objects.Select(x => x.Value))
+                    {
+                        switch (asset)
+                        {
+                            case TextAsset textAsset:
+                                string FileName = $"abdata/list/characustom/{Path.GetFileNameWithoutExtension(assetFile.originalPath)}_{textAsset.m_Name}.csv";
+                                file.AddFileWithName(__tempMakeFile(ExportCSV(textAsset.m_Script)), FileName);
+                                break;
+                            case AssetBundle ab:
+                                break;
+                            default:
+                                hasOtherAssets = true;
+                                break;
+                        }
+                    }
+
+                    //If the list file has assets other than just text lists add it too. It may be necessary for the mod to work.
+                    if (hasOtherAssets)
+                        file.AddFile(assetFile.originalPath, GetNewPath(assetFile.originalPath));
+                }
+            }
+
+            //Export studio csv files
+            if (Directory.Exists(Path.Combine(rootDir, "abdata/studio/info/")))
+            {
+                AssetsManager assetsManager = new AssetsManager();
+                assetsManager.LoadFolder(Path.Combine(rootDir, "abdata/studio/info/"));
+                foreach (var assetFile in assetsManager.assetsFileList)
+                {
+                    bool hasOtherAssets = false;
+                    bool directoryAdded = false;
+
+                    foreach (var asset in assetFile.Objects.Select(x => x.Value))
+                    {
+                        switch (asset)
+                        {
+                            case MonoBehaviour monoBehaviour:
+                                if (monoBehaviour.m_Script.TryGet(out var monoScript) && monoScript.m_Name == "ExcelData")
+                                {
+                                    if (!directoryAdded)
+                                    {
+                                        file.AddDirectoryByName($"abdata/studio/info/{Path.GetFileNameWithoutExtension(assetFile.originalPath)}/");
+                                        directoryAdded = true;
+                                    }
+                                    string FileName = $"abdata/studio/info/{Path.GetFileNameWithoutExtension(assetFile.originalPath)}/{monoBehaviour.m_Name}.csv";
+
+                                    monoBehaviour.reader.Reset();
+                                    file.AddFileWithName(__tempMakeFile(ExportStudioCSV(monoBehaviour.serializedType.m_Nodes, monoBehaviour.reader)), FileName);
+                                }
+                                break;
+                            case AssetBundle ab:
+                            case MonoScript ms:
+                                break;
+                            default:
+                                hasOtherAssets = true;
+                                break;
+                        }
+                    }
+
+                    if (hasOtherAssets)
+                        file.AddFile(assetFile.originalPath, GetNewPath(assetFile.originalPath));
+                }
+            }
+
+            //Add the rest of the unity3d files
             foreach (string subFilePath in Directory.GetFiles(Path.Combine(rootDir, "abdata"), "*", SearchOption.AllDirectories))
             {
-                string newPath = subFilePath.Remove(0, rootDir.Length).Trim('\\', '/').Replace('\\', '/');
-                newPath = newPath.Remove(newPath.LastIndexOf('/') + 1);
+                string newPath = GetNewPath(subFilePath);
 
-                if (newPath.ToLower().StartsWith("abdata/list/characustom/") && subFilePath.EndsWith(".unity3d"))
-                {
-                    //extract the lists
-                    var contents = GetListContents(subFilePath);
+                //These are handled elsewhere
+                if (newPath.ToLower().StartsWith("abdata/list/characustom/") || newPath.ToLower().StartsWith("abdata/studio/info/"))
+                    continue;
 
-                    foreach (var kv in contents)
-                    {
-                        file.AddFileWithName(__tempMakeFile(kv.Value), $"abdata/list/characustom/{kv.Key}");
-                    }
-                }
-                else
+                if (subFilePath.EndsWith(".unity3d"))
                     file.AddFile(subFilePath, newPath);
             }
 
+            //Add all directories
             foreach (string subDirPath in Directory.GetDirectories(Path.Combine(rootDir, "abdata"), "*", SearchOption.AllDirectories))
             {
-                file.AddDirectoryByName(subDirPath.Remove(0, rootDir.Length).Trim('\\', '/').Replace('\\', '/') + "/");
+                string newPath = subDirPath.Remove(0, rootDir.Length).Trim('\\', '/').Replace('\\', '/') + "/";
+                file.AddDirectoryByName(newPath);
             }
 
 
-            //add manifest
+            //Add manifest
             file.AddFileWithName(__tempMakeFile(manifest.Export()), "manifest.xml");
 
             file.Save();
@@ -169,7 +216,7 @@ namespace ZipStudio
         }
 
         //this is temporary because i currently cannot be fucked making a memory source for the zip entries
-        static string __tempMakeFile(string contents)
+        private static string __tempMakeFile(string contents)
         {
             string manifestTempPath = Path.GetTempFileName();
             using (var writer = File.CreateText(manifestTempPath))
@@ -180,9 +227,9 @@ namespace ZipStudio
             return manifestTempPath;
         }
 
-        static readonly List<string> tempPaths = new List<string>();
+        private static readonly List<string> tempPaths = new List<string>();
 
-        static void __deleteAllTempPaths()
+        private static void __deleteAllTempPaths()
         {
             foreach (string tempPath in tempPaths)
                 if (File.Exists(tempPath))
@@ -191,55 +238,179 @@ namespace ZipStudio
             tempPaths.Clear();
         }
 
-        #region CSV export
-        static Dictionary<string, string> GetListContents(string unityFileName)
+        #region CSV
+        private static string ExportStudioCSV(List<TypeTreeNode> members, BinaryReader reader)
         {
-            Dictionary<string, string> output = new Dictionary<string, string>();
-
-            BundleFile bundle = new BundleFile(unityFileName);
-
-            AssetsFile assetsFile = new AssetsFile(bundle.MemoryAssetsFileList[0].fileName, new EndianBinaryReader(bundle.MemoryAssetsFileList[0].memStream));
-
-            AssetBundle assetBundle = new AssetBundle(assetsFile.preloadTable.First(x => x.Value.TypeString == "AssetBundle").Value);
-
-            FixNames(assetsFile, assetBundle);
-
-            string baseName = Path.GetFileNameWithoutExtension(unityFileName);
-
-            foreach (var preload in assetsFile.preloadTable)
+            var sb = new StringBuilder();
+            for (int i = 0; i < members.Count; i++)
             {
-                var asset = preload.Value;
-
-                if (asset.TypeString == "TextAsset")
-                {
-                    string name = $"{baseName}_{asset.Text.Remove(0, asset.Text.LastIndexOf('/') + 1)}.csv";
-
-                    output[name] = ExportCSV(ExportTextAsset(preload.Value));
-                }
+                ParseExcelData(sb, members, reader, ref i);
             }
+            return sb.ToString();
+        }
 
+        private static string ParseExcelData(StringBuilder sb, List<TypeTreeNode> members, BinaryReader reader, ref int i)
+        {
+            var member = members[i];
+            var level = member.m_Level;
+            var varTypeStr = member.m_Type;
+            var varNameStr = member.m_Name;
+            var align = (member.m_MetaFlag & 0x4000) != 0;
+            string output = "";
+            switch (varTypeStr)
+            {
+                case "SInt8":
+                    reader.ReadSByte();
+                    break;
+                case "UInt8":
+                    reader.ReadByte();
+                    break;
+                case "short":
+                case "SInt16":
+                    reader.ReadInt16();
+                    break;
+                case "UInt16":
+                case "unsigned short":
+                    reader.ReadUInt16();
+                    break;
+                case "int":
+                case "SInt32":
+                    reader.ReadInt32();
+                    break;
+                case "UInt32":
+                case "unsigned int":
+                case "Type*":
+                    reader.ReadUInt32();
+                    break;
+                case "long long":
+                case "SInt64":
+                    reader.ReadInt64();
+                    break;
+                case "UInt64":
+                case "unsigned long long":
+                    reader.ReadUInt64();
+                    break;
+                case "float":
+                    reader.ReadSingle();
+                    break;
+                case "double":
+                    reader.ReadDouble();
+                    break;
+                case "bool":
+                    reader.ReadBoolean();
+                    break;
+                case "string":
+                    var str = reader.ReadAlignedString();
+                    if (i == 0) //came here from case "vector". don't write any strings from any other source.
+                    {
+                        output = str;
+                        sb.Append(str);
+                        sb.Append(',');
+                    }
+                    i += 3;
+                    break;
+                case "vector":
+                    {
+                        if ((members[i + 1].m_MetaFlag & 0x4000) != 0)
+                            align = true;
+                        var size = reader.ReadInt32();
+                        var vector = GetMembers(members, level, i);
+                        i += vector.Count - 1;
+                        vector.RemoveRange(0, 3);
+
+                        bool doLineEnd = false;
+                        bool dataRow = i == 6;
+                        for (int j = 0; j < size; j++)
+                        {
+                            int tmp = 0;
+                            string returnValue = ParseExcelData(sb, vector, reader, ref tmp);
+                            if (j == 0 && dataRow && returnValue == "")
+                            {
+                                //first cell of the row is empty
+                                //remove the added comma and don't write the rest of the row
+                                sb.Length--;
+                                break;
+                            }
+                            else
+                                doLineEnd = true;
+                        }
+
+                        //remove the comma at the end of the row and add a line break
+                        if (doLineEnd && dataRow)
+                        {
+                            sb.Length--;
+                            sb.Append(Environment.NewLine);
+                        }
+                        break;
+                    }
+                case "map":
+                    {
+                        if ((members[i + 1].m_MetaFlag & 0x4000) != 0)
+                            align = true;
+                        var size = reader.ReadInt32();
+                        var map = GetMembers(members, level, i);
+                        i += map.Count - 1;
+                        map.RemoveRange(0, 4);
+                        var first = GetMembers(map, map[0].m_Level, 0);
+                        map.RemoveRange(0, first.Count);
+                        var second = map;
+                        for (int j = 0; j < size; j++)
+                        {
+                            int tmp1 = 0;
+                            int tmp2 = 0;
+                            ParseExcelData(sb, first, reader, ref tmp1);
+                            ParseExcelData(sb, second, reader, ref tmp2);
+                        }
+                        break;
+                    }
+                case "TypelessData":
+                    {
+                        var size = reader.ReadInt32();
+                        reader.ReadBytes(size);
+                        i += 2;
+                        break;
+                    }
+                default:
+                    {
+                        if (i != members.Count && members[i + 1].m_Type == "Array")
+                        {
+                            goto case "vector";
+                        }
+                        var @class = GetMembers(members, level, i);
+                        @class.RemoveAt(0);
+                        i += @class.Count;
+                        for (int j = 0; j < @class.Count; j++)
+                        {
+                            ParseExcelData(sb, @class, reader, ref j);
+                        }
+                        break;
+                    }
+            }
+            if (align)
+                reader.AlignStream(4);
             return output;
         }
 
-        static byte[] ExportTextAsset(AssetPreloadData data)
+        private static List<TypeTreeNode> GetMembers(List<TypeTreeNode> members, int level, int index)
         {
-            return new TextAsset(data, true).m_Script;
-        }
-
-        static void FixNames(AssetsFile file, AssetBundle bundle)
-        {
-            foreach (var item in file.preloadTable)
+            var member2 = new List<TypeTreeNode>
             {
-                var replacename = bundle?.m_Container.Find(y => y.second.asset.m_PathID == item.Value.m_PathID)?.first;
-                if (!string.IsNullOrEmpty(replacename))
+                members[0]
+            };
+            for (int i = index + 1; i < members.Count; i++)
+            {
+                var member = members[i];
+                var level2 = member.m_Level;
+                if (level2 <= level)
                 {
-                    var ex = Path.GetExtension(replacename);
-                    item.Value.Text = !string.IsNullOrEmpty(ex) ? replacename.Replace(ex, "") : replacename;
+                    return member2;
                 }
+                member2.Add(member);
             }
+            return member2;
         }
 
-        static string ExportCSV(byte[] data)
+        private static string ExportCSV(byte[] data)
         {
             ChaListData chaListData = MessagePackSerializer.Deserialize<ChaListData>(data);
 
@@ -251,7 +422,7 @@ namespace ZipStudio
 
             bodyBuilder.AppendLine(chaListData.lstKey.Aggregate((a, b) => $"{a},{b}"));
 
-            foreach (var entry in chaListData.dictList.OrderBy(x => x.Key).Select(x => x.Value))
+            foreach (var entry in chaListData.dictList.Select(x => x.Value))
             {
                 bodyBuilder.AppendLine(entry.Aggregate((a, b) => $"{a},{b}"));
             }

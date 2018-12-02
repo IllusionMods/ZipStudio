@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using System.IO;
-using System.Xml.Schema;
 using System.Xml;
+using System.Xml.Linq;
+using System.Xml.Schema;
 
 namespace ZipStudio.Core
 {
@@ -37,40 +35,40 @@ namespace ZipStudio.Core
             }
         }
 
-        public string Guid 
+        public string Guid
         {
-            get { return GetContents("guid"); }
-            set { SetContents("guid", value); }
+            get => GetContents("guid");
+            set => SetContents("guid", value);
         }
 
-        public string Name 
+        public string Name
         {
-            get { return GetContents("name"); }
-            set { SetContents("name", value); }
+            get => GetContents("name");
+            set => SetContents("name", value);
         }
 
-        public string Version 
+        public string Version
         {
-            get { return GetContents("version"); }
-            set { SetContents("version", value); }
+            get => GetContents("version");
+            set => SetContents("version", value);
         }
 
-        public string Author 
+        public string Author
         {
-            get { return GetContents("author"); }
-            set { SetContents("author", value); }
+            get => GetContents("author");
+            set => SetContents("author", value);
         }
 
-        public string Description 
+        public string Description
         {
-            get { return GetContents("description"); }
-            set { SetContents("description", value); }
+            get => GetContents("description");
+            set => SetContents("description", value);
         }
 
-        public string Website 
+        public string Website
         {
-            get { return GetContents("website"); }
-            set { SetContents("website", value); }
+            get => GetContents("website");
+            set => SetContents("website", value);
         }
 
         #endregion
@@ -79,8 +77,8 @@ namespace ZipStudio.Core
         {
             xmlDocument = XDocument.Parse(Properties.Resources.manifest_template);
 
-            XmlSchemaSet schemas = new XmlSchemaSet();  
-            schemas.Add("", XmlReader.Create(new StringReader(Properties.Resources.manifest_schema)));  
+            XmlSchemaSet schemas = new XmlSchemaSet();
+            schemas.Add("", XmlReader.Create(new StringReader(Properties.Resources.manifest_schema)));
         }
 
         public Manifest(string xml)
@@ -105,7 +103,7 @@ namespace ZipStudio.Core
         {
             return xmlDocument.ToString();
         }
-        
+
         public byte[] ExportAsBytes()
         {
             return utfEncoding.GetBytes(Export());
