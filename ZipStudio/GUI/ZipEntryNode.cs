@@ -1,15 +1,14 @@
-﻿using System;
+﻿using Ionic.Zip;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using Ionic.Zip;
 
 namespace ZipStudio.GUI
 {
-    class ZipEntryNode : TreeNode
+    internal class ZipEntryNode : TreeNode
     {
         public ZipEntry Entry { get; protected set; }
 
@@ -34,7 +33,7 @@ namespace ZipStudio.GUI
                     ForeColor = Color.SlateBlue;
                     return;
                 }
-                
+
                 if (Entry.FileName.EndsWith(".csv"))
                 {
                     ForeColor = Color.OrangeRed;
@@ -55,7 +54,7 @@ namespace ZipStudio.GUI
                 if (!string.IsNullOrWhiteSpace(entry.FileName))
                     allCreated.Add(new ZipEntryNode(entry));
             }
-            
+
             foreach (ZipEntryNode node in allCreated.OrderByDescending(x => x.Entry.FileName.Count(y => y == '/')))
             {
                 bool foundOwner = false;

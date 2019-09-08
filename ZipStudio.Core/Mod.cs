@@ -1,19 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Ionic.Zip;
+using System;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Ionic.Zip;
 
 namespace ZipStudio.Core
 {
     public class Mod : IDisposable
     {
         public string Filename { get; protected set; }
-
         public ZipFile ZipFile { get; protected set; }
-
-        public Manifest Manifest { get; protected set; } 
+        public Manifest Manifest { get; protected set; }
 
         public Mod(string filename)
         {
@@ -22,14 +17,7 @@ namespace ZipStudio.Core
 
             var manifestentry = ZipFile.Entries.FirstOrDefault(x => x.FileName == "manifest.xml");
 
-            if (manifestentry != null)
-            {
-                Manifest = new Manifest(manifestentry.ExtractToMemory());
-            }
-            else
-            {
-                Manifest = new Manifest();
-            }
+            Manifest = manifestentry == null ? new Manifest() : new Manifest(manifestentry.ExtractToMemory());
         }
 
         public void Save()
