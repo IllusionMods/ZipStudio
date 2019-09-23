@@ -34,6 +34,18 @@
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.label6 = new System.Windows.Forms.Label();
+            this.txtDescription = new System.Windows.Forms.TextBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.txtWebsite = new System.Windows.Forms.TextBox();
+            this.label4 = new System.Windows.Forms.Label();
+            this.txtVersion = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.txtAuthor = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.txtName = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
+            this.txtGUID = new System.Windows.Forms.TextBox();
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.tabPage4 = new System.Windows.Forms.TabPage();
             this.imgLogo = new System.Windows.Forms.PictureBox();
@@ -49,18 +61,8 @@
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.importToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.folderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.txtGUID = new System.Windows.Forms.TextBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
-            this.txtName = new System.Windows.Forms.TextBox();
-            this.label3 = new System.Windows.Forms.Label();
-            this.txtAuthor = new System.Windows.Forms.TextBox();
-            this.label4 = new System.Windows.Forms.Label();
-            this.txtVersion = new System.Windows.Forms.TextBox();
-            this.label5 = new System.Windows.Forms.Label();
-            this.txtWebsite = new System.Windows.Forms.TextBox();
-            this.label6 = new System.Windows.Forms.Label();
-            this.txtDescription = new System.Windows.Forms.TextBox();
+            this.label7 = new System.Windows.Forms.Label();
+            this.GameName = new System.Windows.Forms.ComboBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -122,6 +124,8 @@
             // 
             // tabPage2
             // 
+            this.tabPage2.Controls.Add(this.GameName);
+            this.tabPage2.Controls.Add(this.label7);
             this.tabPage2.Controls.Add(this.label6);
             this.tabPage2.Controls.Add(this.txtDescription);
             this.tabPage2.Controls.Add(this.label5);
@@ -141,6 +145,98 @@
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Manifest Editor";
             this.tabPage2.UseVisualStyleBackColor = true;
+            this.tabPage2.Click += new System.EventHandler(this.TabPage2_Click);
+            // 
+            // label6
+            // 
+            this.label6.Location = new System.Drawing.Point(7, 170);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(63, 16);
+            this.label6.TabIndex = 11;
+            this.label6.Text = "Description:";
+            // 
+            // txtDescription
+            // 
+            this.txtDescription.Location = new System.Drawing.Point(76, 167);
+            this.txtDescription.Multiline = true;
+            this.txtDescription.Name = "txtDescription";
+            this.txtDescription.Size = new System.Drawing.Size(331, 177);
+            this.txtDescription.TabIndex = 10;
+            // 
+            // label5
+            // 
+            this.label5.Location = new System.Drawing.Point(7, 116);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(63, 16);
+            this.label5.TabIndex = 9;
+            this.label5.Text = "Website:";
+            // 
+            // txtWebsite
+            // 
+            this.txtWebsite.Location = new System.Drawing.Point(76, 113);
+            this.txtWebsite.Name = "txtWebsite";
+            this.txtWebsite.Size = new System.Drawing.Size(331, 20);
+            this.txtWebsite.TabIndex = 8;
+            // 
+            // label4
+            // 
+            this.label4.Location = new System.Drawing.Point(7, 90);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(63, 16);
+            this.label4.TabIndex = 7;
+            this.label4.Text = "Version:";
+            // 
+            // txtVersion
+            // 
+            this.txtVersion.Location = new System.Drawing.Point(76, 87);
+            this.txtVersion.Name = "txtVersion";
+            this.txtVersion.Size = new System.Drawing.Size(331, 20);
+            this.txtVersion.TabIndex = 6;
+            // 
+            // label3
+            // 
+            this.label3.Location = new System.Drawing.Point(7, 64);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(63, 16);
+            this.label3.TabIndex = 5;
+            this.label3.Text = "Author:";
+            // 
+            // txtAuthor
+            // 
+            this.txtAuthor.Location = new System.Drawing.Point(76, 61);
+            this.txtAuthor.Name = "txtAuthor";
+            this.txtAuthor.Size = new System.Drawing.Size(331, 20);
+            this.txtAuthor.TabIndex = 4;
+            // 
+            // label2
+            // 
+            this.label2.Location = new System.Drawing.Point(7, 38);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(63, 16);
+            this.label2.TabIndex = 3;
+            this.label2.Text = "Name:";
+            // 
+            // txtName
+            // 
+            this.txtName.Location = new System.Drawing.Point(76, 35);
+            this.txtName.Name = "txtName";
+            this.txtName.Size = new System.Drawing.Size(331, 20);
+            this.txtName.TabIndex = 2;
+            // 
+            // label1
+            // 
+            this.label1.Location = new System.Drawing.Point(7, 12);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(63, 16);
+            this.label1.TabIndex = 1;
+            this.label1.Text = "GUID:";
+            // 
+            // txtGUID
+            // 
+            this.txtGUID.Location = new System.Drawing.Point(76, 9);
+            this.txtGUID.Name = "txtGUID";
+            this.txtGUID.Size = new System.Drawing.Size(331, 20);
+            this.txtGUID.TabIndex = 0;
             // 
             // tabPage3
             // 
@@ -251,7 +347,7 @@
             this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.importToolStripMenuItem});
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
-            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
+            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
             this.toolsToolStripMenuItem.Text = "Tools";
             // 
             // importToolStripMenuItem
@@ -265,100 +361,35 @@
             // folderToolStripMenuItem
             // 
             this.folderToolStripMenuItem.Name = "folderToolStripMenuItem";
-            this.folderToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
+            this.folderToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.folderToolStripMenuItem.Text = "Folder";
             this.folderToolStripMenuItem.Click += new System.EventHandler(this.folderToolStripMenuItem_Click);
             // 
-            // txtGUID
+            // label7
             // 
-            this.txtGUID.Location = new System.Drawing.Point(76, 9);
-            this.txtGUID.Name = "txtGUID";
-            this.txtGUID.Size = new System.Drawing.Size(157, 20);
-            this.txtGUID.TabIndex = 0;
+            this.label7.Location = new System.Drawing.Point(7, 143);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(63, 16);
+            this.label7.TabIndex = 12;
+            this.label7.Text = "Game:";
+            this.label7.Click += new System.EventHandler(this.Label7_Click);
             // 
-            // label1
+            // GameName
             // 
-            this.label1.Location = new System.Drawing.Point(7, 12);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(63, 16);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "GUID:";
-            // 
-            // label2
-            // 
-            this.label2.Location = new System.Drawing.Point(7, 38);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(63, 16);
-            this.label2.TabIndex = 3;
-            this.label2.Text = "Name:";
-            // 
-            // txtName
-            // 
-            this.txtName.Location = new System.Drawing.Point(76, 35);
-            this.txtName.Name = "txtName";
-            this.txtName.Size = new System.Drawing.Size(157, 20);
-            this.txtName.TabIndex = 2;
-            // 
-            // label3
-            // 
-            this.label3.Location = new System.Drawing.Point(7, 64);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(63, 16);
-            this.label3.TabIndex = 5;
-            this.label3.Text = "Author:";
-            // 
-            // txtAuthor
-            // 
-            this.txtAuthor.Location = new System.Drawing.Point(76, 61);
-            this.txtAuthor.Name = "txtAuthor";
-            this.txtAuthor.Size = new System.Drawing.Size(157, 20);
-            this.txtAuthor.TabIndex = 4;
-            // 
-            // label4
-            // 
-            this.label4.Location = new System.Drawing.Point(7, 90);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(63, 16);
-            this.label4.TabIndex = 7;
-            this.label4.Text = "Version:";
-            // 
-            // txtVersion
-            // 
-            this.txtVersion.Location = new System.Drawing.Point(76, 87);
-            this.txtVersion.Name = "txtVersion";
-            this.txtVersion.Size = new System.Drawing.Size(157, 20);
-            this.txtVersion.TabIndex = 6;
-            // 
-            // label5
-            // 
-            this.label5.Location = new System.Drawing.Point(7, 116);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(63, 16);
-            this.label5.TabIndex = 9;
-            this.label5.Text = "Website:";
-            // 
-            // txtWebsite
-            // 
-            this.txtWebsite.Location = new System.Drawing.Point(76, 113);
-            this.txtWebsite.Name = "txtWebsite";
-            this.txtWebsite.Size = new System.Drawing.Size(157, 20);
-            this.txtWebsite.TabIndex = 8;
-            // 
-            // label6
-            // 
-            this.label6.Location = new System.Drawing.Point(7, 142);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(63, 16);
-            this.label6.TabIndex = 11;
-            this.label6.Text = "Description:";
-            // 
-            // txtDescription
-            // 
-            this.txtDescription.Location = new System.Drawing.Point(76, 139);
-            this.txtDescription.Multiline = true;
-            this.txtDescription.Name = "txtDescription";
-            this.txtDescription.Size = new System.Drawing.Size(331, 177);
-            this.txtDescription.TabIndex = 10;
+            this.GameName.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.GameName.FormattingEnabled = true;
+            this.GameName.Items.AddRange(new object[] {
+            "<not set>",
+            "AI Girl",
+            "Emotion Creators",
+            "Koikatsu",
+            "PlayHome",
+            "HoneySelect"});
+            this.GameName.Location = new System.Drawing.Point(76, 138);
+            this.GameName.Name = "GameName";
+            this.GameName.Size = new System.Drawing.Size(331, 21);
+            this.GameName.TabIndex = 13;
+            this.GameName.SelectedIndexChanged += new System.EventHandler(this.ComboBox1_SelectedIndexChanged);
             // 
             // formMain
             // 
@@ -422,6 +453,8 @@
         private System.Windows.Forms.TextBox txtName;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox txtGUID;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.ComboBox GameName;
     }
 }
 

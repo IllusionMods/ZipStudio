@@ -52,7 +52,8 @@ namespace ZipStudio
 
             Manifest manifest = new Manifest
             {
-                Guid = "<not set>"
+                Guid = "<not set>",
+                Game = "<not set>"
             };
 
             //check for root abdata folder

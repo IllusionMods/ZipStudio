@@ -71,6 +71,12 @@ namespace ZipStudio.Core
             set => SetContents("website", value);
         }
 
+        public string Game
+        {
+            get => GetContents("game");
+            set => SetContents("game", value);
+        }
+
         #endregion
 
         public Manifest()

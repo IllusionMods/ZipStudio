@@ -123,6 +123,7 @@ By Bepis";
             txtAuthor.DataBindings.Add(nameof(Label.Text), manifestSource, nameof(Manifest.Author));
             txtWebsite.DataBindings.Add(nameof(Label.Text), manifestSource, nameof(Manifest.Website));
             txtDescription.DataBindings.Add(nameof(Label.Text), manifestSource, nameof(Manifest.Description));
+            GameName.DataBindings.Add(nameof(Label.Text), manifestSource, nameof(Manifest.Game));
         }
 
         private void SetManifestDatabinds(Manifest manifest)
@@ -136,5 +137,20 @@ By Bepis";
         }
 
         #endregion
+
+        private void Label7_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void ComboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void TabPage2_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
