@@ -51,7 +51,7 @@ namespace ZipStudio
         {
             OpenFileDialog dialog = new OpenFileDialog
             {
-                Filter = "Compressed folders (*.zip)|*.zip",
+                Filter = "Compressed mod (*.zipmod)|*.zipmod|Compressed folders (*.zip)|*.zip",
             };
 
             if (dialog.ShowDialog() != DialogResult.OK)

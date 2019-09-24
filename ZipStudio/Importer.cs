@@ -30,7 +30,7 @@ namespace ZipStudio
 
             CommonSaveFileDialog saveDialog = new CommonSaveFileDialog
             {
-                Filters = { new CommonFileDialogFilter("Compressed folder", "*.zip") },
+                Filters = { new CommonFileDialogFilter("Compressed mod", "*.zipmod"), new CommonFileDialogFilter("Compressed folder", "*.zip") },
                 Title = "Save new .zip file",
                 AlwaysAppendDefaultExtension = true
             };
@@ -41,7 +41,10 @@ namespace ZipStudio
             string sourceDir = openDialog.FileName;
             string savePath = saveDialog.FileName;
 
-            if (!savePath.ToLower().EndsWith(".zip"))
+            if (!savePath.ToLower().EndsWith(".zipmod") && (saveDialog.SelectedFileTypeIndex == 1))
+                savePath += ".zipmod";
+
+            if (!savePath.ToLower().EndsWith(".zip") && (saveDialog.SelectedFileTypeIndex == 2))
                 savePath += ".zip";
 
             if (File.Exists(savePath))
