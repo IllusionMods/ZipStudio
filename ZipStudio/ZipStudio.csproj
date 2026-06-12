@@ -11,6 +11,8 @@
 		<Reference Include="System.Half">
 			<HintPath>..\lib\System.Half.dll</HintPath>
 		</Reference>
+		<Reference Include="System.IO.Compression" />
+		<Reference Include="System.IO.Compression.FileSystem" />
 	</ItemGroup>
 
 	<ItemGroup>

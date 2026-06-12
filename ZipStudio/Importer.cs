@@ -1,10 +1,10 @@
 ﻿using AssetStudio;
-using Ionic.Zip;
 using MessagePack;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using ZipStudio.Core;
@@ -50,9 +50,6 @@ namespace ZipStudio
             if (File.Exists(savePath))
                 File.Delete(savePath);
 
-            ZipFile file = new ZipFile(savePath, Encoding.UTF8);
-            //file.CompressionLevel = Ionic.Zlib.CompressionLevel.None;
-
             Manifest manifest = new Manifest
             {
                 Guid = "<not set>"
@@ -76,169 +73,162 @@ namespace ZipStudio
                 {
                     //no abdata folder exists
                     message = "Cannot find \"abdata\" folder!";
-
-                    file.Save();
-                    file.Dispose();
-                    File.Delete(savePath);
-
                     return false;
                 }
             }
 
-            string GetNewPath(string FullPath)
+            string GetEntryName(string fullPath)
             {
-                string newPath = FullPath.Remove(0, rootDir.Length).Trim('\\', '/').Replace('\\', '/');
-                newPath = newPath.Remove(newPath.LastIndexOf('/') + 1);
-                return newPath;
+                return fullPath.Remove(0, rootDir.Length).Trim('\\', '/').Replace('\\', '/');
             }
 
-            void TryAddFolderFromRoot(string prefix)
+            using (var zipStream = File.Create(savePath))
+            using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, false, Encoding.UTF8))
             {
-                string totalPath = Path.Combine(rootDir, prefix);
+                var addedDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-                if (Directory.Exists(totalPath))
+                void AddDirectoryByName(string entryName)
                 {
-                    file.AddDirectoryByName(prefix + "/");
+                    entryName = entryName.Trim('\\', '/').Replace('\\', '/');
+                    if (string.IsNullOrWhiteSpace(entryName))
+                        return;
 
-                    foreach (string subFilePath in Directory.GetFiles(Path.Combine(rootDir, prefix), "*", SearchOption.AllDirectories))
-                        file.AddFile(subFilePath, GetNewPath(subFilePath));
+                    entryName += "/";
 
-                    foreach (string subDirPath in Directory.GetDirectories(Path.Combine(rootDir, prefix), "*", SearchOption.AllDirectories))
-                        file.AddDirectoryByName(subDirPath.Remove(0, rootDir.Length).Trim('\\', '/').Replace('\\', '/') + "/");
+                    if (addedDirectories.Add(entryName))
+                        archive.CreateEntry(entryName);
                 }
-            }
 
-            //need to add abdata with special care
-            file.AddDirectoryByName("abdata/");
-            TryAddFolderFromRoot("UserData");
-
-            //Export csv files
-            if (Directory.Exists(Path.Combine(rootDir, "abdata/list/characustom/")))
-            {
-                AssetsManager assetsManager = new AssetsManager();
-                assetsManager.LoadFolder(Path.Combine(rootDir, "abdata/list/characustom/"));
-                foreach (var assetFile in assetsManager.assetsFileList)
+                void AddFile(string sourcePath, string entryName)
                 {
-                    bool hasOtherAssets = false;
+                    entryName = entryName.TrimStart('/').Replace('\\', '/');
+                    archive.AddFileWithName(sourcePath, entryName);
+                }
 
-                    foreach (var asset in assetFile.Objects.Select(x => x.Value))
+                void AddTextFile(string entryName, string contents)
+                {
+                    entryName = entryName.TrimStart('/').Replace('\\', '/');
+                    archive.AddStringEntry(entryName, contents);
+                }
+
+                void TryAddFolderFromRoot(string prefix)
+                {
+                    string totalPath = Path.Combine(rootDir, prefix);
+
+                    if (Directory.Exists(totalPath))
                     {
-                        switch (asset)
-                        {
-                            case TextAsset textAsset:
-                                string FileName = $"abdata/list/characustom/{Path.GetFileNameWithoutExtension(assetFile.originalPath)}_{textAsset.m_Name}.csv";
-                                file.AddFileWithName(__tempMakeFile(ExportCSV(textAsset.m_Script)), FileName);
-                                break;
-                            case AssetBundle ab:
-                                break;
-                            default:
-                                hasOtherAssets = true;
-                                break;
-                        }
+                        AddDirectoryByName(prefix);
+
+                        foreach (string subFilePath in Directory.GetFiles(totalPath, "*", SearchOption.AllDirectories))
+                            AddFile(subFilePath, GetEntryName(subFilePath));
+
+                        foreach (string subDirPath in Directory.GetDirectories(totalPath, "*", SearchOption.AllDirectories))
+                            AddDirectoryByName(GetEntryName(subDirPath));
                     }
-
-                    //If the list file has assets other than just text lists add it too. It may be necessary for the mod to work.
-                    if (hasOtherAssets)
-                        file.AddFile(assetFile.originalPath, GetNewPath(assetFile.originalPath));
                 }
-            }
 
-            //Export studio csv files
-            if (Directory.Exists(Path.Combine(rootDir, "abdata/studio/info/")))
-            {
-                AssetsManager assetsManager = new AssetsManager();
-                assetsManager.LoadFolder(Path.Combine(rootDir, "abdata/studio/info/"));
-                foreach (var assetFile in assetsManager.assetsFileList)
+                //need to add abdata with special care
+                AddDirectoryByName("abdata");
+                TryAddFolderFromRoot("UserData");
+
+                //Export csv files
+                if (Directory.Exists(Path.Combine(rootDir, "abdata/list/characustom/")))
                 {
-                    bool hasOtherAssets = false;
-                    bool directoryAdded = false;
-
-                    foreach (var asset in assetFile.Objects.Select(x => x.Value))
+                    AssetsManager assetsManager = new AssetsManager();
+                    assetsManager.LoadFolder(Path.Combine(rootDir, "abdata/list/characustom/"));
+                    foreach (var assetFile in assetsManager.assetsFileList)
                     {
-                        switch (asset)
+                        bool hasOtherAssets = false;
+
+                        foreach (var asset in assetFile.Objects.Select(x => x.Value))
                         {
-                            case MonoBehaviour monoBehaviour:
-                                if (monoBehaviour.m_Script.TryGet(out var monoScript) && monoScript.m_Name == "ExcelData")
-                                {
-                                    if (!directoryAdded)
+                            switch (asset)
+                            {
+                                case TextAsset textAsset:
+                                    string fileName = $"abdata/list/characustom/{Path.GetFileNameWithoutExtension(assetFile.originalPath)}_{textAsset.m_Name}.csv";
+                                    AddTextFile(fileName, ExportCSV(textAsset.m_Script));
+                                    break;
+                                case AssetBundle ab:
+                                    break;
+                                default:
+                                    hasOtherAssets = true;
+                                    break;
+                            }
+                        }
+
+                        //If the list file has assets other than just text lists add it too. It may be necessary for the mod to work.
+                        if (hasOtherAssets)
+                            AddFile(assetFile.originalPath, GetEntryName(assetFile.originalPath));
+                    }
+                }
+
+                //Export studio csv files
+                if (Directory.Exists(Path.Combine(rootDir, "abdata/studio/info/")))
+                {
+                    AssetsManager assetsManager = new AssetsManager();
+                    assetsManager.LoadFolder(Path.Combine(rootDir, "abdata/studio/info/"));
+                    foreach (var assetFile in assetsManager.assetsFileList)
+                    {
+                        bool hasOtherAssets = false;
+                        bool directoryAdded = false;
+
+                        foreach (var asset in assetFile.Objects.Select(x => x.Value))
+                        {
+                            switch (asset)
+                            {
+                                case MonoBehaviour monoBehaviour:
+                                    if (monoBehaviour.m_Script.TryGet(out var monoScript) && monoScript.m_Name == "ExcelData")
                                     {
-                                        file.AddDirectoryByName($"abdata/studio/info/{Path.GetFileNameWithoutExtension(assetFile.originalPath)}/");
-                                        directoryAdded = true;
+                                        if (!directoryAdded)
+                                        {
+                                            AddDirectoryByName($"abdata/studio/info/{Path.GetFileNameWithoutExtension(assetFile.originalPath)}");
+                                            directoryAdded = true;
+                                        }
+                                        string fileName = $"abdata/studio/info/{Path.GetFileNameWithoutExtension(assetFile.originalPath)}/{monoBehaviour.m_Name}.csv";
+
+                                        monoBehaviour.reader.Reset();
+                                        AddTextFile(fileName, ExportStudioCSV(monoBehaviour.serializedType.m_Nodes, monoBehaviour.reader));
                                     }
-                                    string FileName = $"abdata/studio/info/{Path.GetFileNameWithoutExtension(assetFile.originalPath)}/{monoBehaviour.m_Name}.csv";
-
-                                    monoBehaviour.reader.Reset();
-                                    file.AddFileWithName(__tempMakeFile(ExportStudioCSV(monoBehaviour.serializedType.m_Nodes, monoBehaviour.reader)), FileName);
-                                }
-                                break;
-                            case AssetBundle ab:
-                            case MonoScript ms:
-                                break;
-                            default:
-                                hasOtherAssets = true;
-                                break;
+                                    break;
+                                case AssetBundle ab:
+                                case MonoScript ms:
+                                    break;
+                                default:
+                                    hasOtherAssets = true;
+                                    break;
+                            }
                         }
+
+                        if (hasOtherAssets)
+                            AddFile(assetFile.originalPath, GetEntryName(assetFile.originalPath));
                     }
-
-                    if (hasOtherAssets)
-                        file.AddFile(assetFile.originalPath, GetNewPath(assetFile.originalPath));
                 }
+
+                //Add the rest of the unity3d files
+                foreach (string subFilePath in Directory.GetFiles(Path.Combine(rootDir, "abdata"), "*", SearchOption.AllDirectories))
+                {
+                    string newPath = GetEntryName(subFilePath);
+
+                    //These are handled elsewhere
+                    if (newPath.ToLower().StartsWith("abdata/list/characustom/") || newPath.ToLower().StartsWith("abdata/studio/info/"))
+                        continue;
+
+                    if (subFilePath.EndsWith(".unity3d"))
+                        AddFile(subFilePath, newPath);
+                }
+
+                //Add all directories
+                foreach (string subDirPath in Directory.GetDirectories(Path.Combine(rootDir, "abdata"), "*", SearchOption.AllDirectories))
+                {
+                    AddDirectoryByName(GetEntryName(subDirPath));
+                }
+
+                //Add manifest
+                AddTextFile("manifest.xml", manifest.Export());
             }
-
-            //Add the rest of the unity3d files
-            foreach (string subFilePath in Directory.GetFiles(Path.Combine(rootDir, "abdata"), "*", SearchOption.AllDirectories))
-            {
-                string newPath = GetNewPath(subFilePath);
-
-                //These are handled elsewhere
-                if (newPath.ToLower().StartsWith("abdata/list/characustom/") || newPath.ToLower().StartsWith("abdata/studio/info/"))
-                    continue;
-
-                if (subFilePath.EndsWith(".unity3d"))
-                    file.AddFile(subFilePath, newPath);
-            }
-
-            //Add all directories
-            foreach (string subDirPath in Directory.GetDirectories(Path.Combine(rootDir, "abdata"), "*", SearchOption.AllDirectories))
-            {
-                string newPath = subDirPath.Remove(0, rootDir.Length).Trim('\\', '/').Replace('\\', '/') + "/";
-                file.AddDirectoryByName(newPath);
-            }
-
-
-            //Add manifest
-            file.AddFileWithName(__tempMakeFile(manifest.Export()), "manifest.xml");
-
-            file.Save();
-            file.Dispose();
-
-            __deleteAllTempPaths();
 
             mod = new Mod(savePath);
             return true;
-        }
-
-        //this is temporary because i currently cannot be fucked making a memory source for the zip entries
-        private static string __tempMakeFile(string contents)
-        {
-            string manifestTempPath = Path.GetTempFileName();
-            using (var writer = File.CreateText(manifestTempPath))
-                writer.Write(contents);
-
-            tempPaths.Add(manifestTempPath);
-
-            return manifestTempPath;
-        }
-
-        private static readonly List<string> tempPaths = new List<string>();
-
-        private static void __deleteAllTempPaths()
-        {
-            foreach (string tempPath in tempPaths)
-                if (File.Exists(tempPath))
-                    File.Delete(tempPath);
-
-            tempPaths.Clear();
         }
 
         #region CSV

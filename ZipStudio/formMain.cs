@@ -36,9 +36,10 @@ namespace ZipStudio
         {
             trvZip.Nodes.Clear();
 
-            trvZip.Nodes.AddRange(ZipEntryNode.GenerateNodes(currentMod.ZipFile).Cast<TreeNode>().ToArray());
+            trvZip.Nodes.AddRange(ZipEntryNode.GenerateNodes(currentMod.Entries).Cast<TreeNode>().ToArray());
 
-            trvZip.Nodes[0]?.ExpandAll();
+            if (trvZip.Nodes.Count > 0)
+                trvZip.Nodes[0].ExpandAll();
         }
 
         public formMain()

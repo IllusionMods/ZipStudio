@@ -1,31 +1,43 @@
-﻿using Ionic.Zip;
-using System;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
+using System.IO.Compression;
+using System.Text;
 
 namespace ZipStudio.Core
 {
     public static class Utility
     {
-        public static MemoryStream ExtractToMemory(this ZipEntry entry)
+        public static MemoryStream ExtractToMemory(this ZipArchiveEntry entry)
         {
-            MemoryStream memStream = new MemoryStream();
-            entry.Extract(memStream);
+            var memStream = new MemoryStream();
+            using (var sourceStream = entry.Open())
+            {
+                sourceStream.CopyTo(memStream);
+            }
+
             memStream.Position = 0;
             return memStream;
         }
 
-        public static ZipEntry AddFileWithName(this ZipFile file, string fileName, string name)
+        public static void AddFileWithName(this ZipArchive archive, string fileName, string name)
         {
-            string directory = "";
+            var entry = archive.CreateEntry(name);
 
-            if (name.Contains('/'))
-                directory = name.Remove(name.LastIndexOf('/'));
+            using (var sourceStream = File.OpenRead(fileName))
+            using (var entryStream = entry.Open())
+            {
+                sourceStream.CopyTo(entryStream);
+            }
+        }
 
-            var entry = file.AddFile(fileName, directory);
-            entry.FileName = name;
+        public static void AddStringEntry(this ZipArchive archive, string name, string contents)
+        {
+            var entry = archive.CreateEntry(name);
 
-            return entry;
+            using (var stream = entry.Open())
+            using (var writer = new StreamWriter(stream, new UTF8Encoding(false)))
+            {
+                writer.Write(contents);
+            }
         }
     }
 }

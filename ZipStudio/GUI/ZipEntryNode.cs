@@ -1,18 +1,17 @@
-﻿using Ionic.Zip;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Windows.Forms;
+using ZipStudio.Core;
 
 namespace ZipStudio.GUI
 {
     internal class ZipEntryNode : TreeNode
     {
-        public ZipEntry Entry { get; protected set; }
+        public ZipEntryInfo Entry { get; protected set; }
 
-        public ZipEntryNode(ZipEntry entry)
+        public ZipEntryNode(ZipEntryInfo entry)
         {
             Entry = entry;
 
@@ -21,20 +20,20 @@ namespace ZipStudio.GUI
             Text = entry.FileName.TrimEnd('/');
 
             if (Text.Contains('/'))
-                Text = Text.Remove(0, Text.IndexOf('/') + 1);
+                Text = Text.Remove(0, Text.LastIndexOf('/') + 1);
         }
 
         protected void SetColor()
         {
             if (!Entry.IsDirectory)
             {
-                if (Entry.FileName.ToLower() == "manifest.xml")
+                if (Entry.FileName.Equals("manifest.xml", StringComparison.OrdinalIgnoreCase))
                 {
                     ForeColor = Color.SlateBlue;
                     return;
                 }
 
-                if (Entry.FileName.EndsWith(".csv"))
+                if (Entry.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
                 {
                     ForeColor = Color.OrangeRed;
                     return;
@@ -44,18 +43,18 @@ namespace ZipStudio.GUI
             ForeColor = Color.Black;
         }
 
-        public static IEnumerable<ZipEntryNode> GenerateNodes(ZipFile zipFile)
+        public static IEnumerable<ZipEntryNode> GenerateNodes(IEnumerable<ZipEntryInfo> entries)
         {
             List<ZipEntryNode> topLevelList = new List<ZipEntryNode>();
             List<ZipEntryNode> allCreated = new List<ZipEntryNode>();
 
-            foreach (ZipEntry entry in zipFile)
+            foreach (var entry in entries)
             {
                 if (!string.IsNullOrWhiteSpace(entry.FileName))
                     allCreated.Add(new ZipEntryNode(entry));
             }
 
-            foreach (ZipEntryNode node in allCreated.OrderByDescending(x => x.Entry.FileName.Count(y => y == '/')))
+            foreach (ZipEntryNode node in allCreated.OrderByDescending(x => x.Entry.FileName.TrimEnd('/').Count(y => y == '/')))
             {
                 bool foundOwner = false;
                 int slashCount = node.Entry.FileName.TrimEnd('/').Count(y => y == '/');
@@ -63,7 +62,7 @@ namespace ZipStudio.GUI
                 foreach (ZipEntryNode potentialParentNode in allCreated)
                 {
                     if (potentialParentNode.Entry.IsDirectory &&
-                        node.Entry.FileName.StartsWith(potentialParentNode.Entry.FileName) &&
+                        node.Entry.FileName.StartsWith(potentialParentNode.Entry.FileName, StringComparison.OrdinalIgnoreCase) &&
                         potentialParentNode.Entry.FileName.TrimEnd('/').Count(x => x == '/') == slashCount - 1)
                     {
                         foundOwner = true;
