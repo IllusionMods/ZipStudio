@@ -12,7 +12,7 @@
 		<!-- Sets the 'File description' field on the dll file -->
 		<AssemblyTitle>A tool for converting Koikatsu mods to Sideloader zipmods.</AssemblyTitle>
 
-		<TargetFramework>net471</TargetFramework>
+		<TargetFramework>net472</TargetFramework>
 
 		<UseWindowsForms>true</UseWindowsForms>
 		<ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
