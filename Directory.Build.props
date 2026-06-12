@@ -1,0 +1,29 @@
+<Project>
+	<PropertyGroup>
+		<!-- This is the master version, only change this one -->
+		<Version>0.2.1</Version>
+
+		<!-- Sets the 'Company' field on the dll file -->
+		<Authors>https://github.com/IllusionMods/ZipStudio</Authors>
+		<!-- Sets the 'Copyright' field on the dll file -->
+		<Copyright>Copyright MIT © Bepis 2018"</Copyright>
+		<!-- Sets the 'Product name' field on the dll file -->
+		<Product>ZipStudio</Product>
+		<!-- Sets the 'File description' field on the dll file -->
+		<AssemblyTitle>A tool for converting Koikatsu mods to Sideloader zipmods.</AssemblyTitle>
+
+		<TargetFramework>net471</TargetFramework>
+
+		<UseWindowsForms>true</UseWindowsForms>
+		<ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+
+		<DisableFody Condition="'$(Configuration)' == 'Debug'">true</DisableFody>
+
+		<GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
+		<DebugType>embedded</DebugType>
+		<DebugSymbols>true</DebugSymbols>
+
+		<OutputPath>..\bin\</OutputPath>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+	</PropertyGroup>
+</Project>

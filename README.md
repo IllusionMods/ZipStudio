@@ -1,5 +1,5 @@
 # ZipStudio
-A tool for converting Koikatsu mods to sideloader.
+A tool for converting Koikatsu mods to Sideloader zipmods.
 
 Uses parts of AssetStudio  
 Copyright (c) 2016-2018 Perfare  

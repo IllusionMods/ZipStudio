@@ -81,10 +81,10 @@ namespace ZipStudio.Core
 
         public Manifest()
         {
-            xmlDocument = XDocument.Parse(Properties.Resources.manifest_template);
+            xmlDocument = XDocument.Parse(Resources.Resources.manifest_template);
 
             XmlSchemaSet schemas = new XmlSchemaSet();
-            schemas.Add("", XmlReader.Create(new StringReader(Properties.Resources.manifest_schema)));
+            schemas.Add("", XmlReader.Create(new StringReader(Resources.Resources.manifest_schema)));
         }
 
         public Manifest(string xml)
